@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FroggyHub — лягушачья тусовка 🐸</title>
+
+<style>
+  :root{
+    --dark:#0c3b26; --dark-2:#0f4a31; --text:#103c23; --muted:#3e7053;
+    --water1:#bfe9ff; --water2:#e9f8ff; --shore:#93c47d; --soil:#6b4f3b;
+    --lily:#8fd48d; --lily-dark:#63b36c;
+    --bubble:#e8fbe8; --bubble-bd:#bfe8c5;
+    --brick:#0e5e38; --brick-bd:#0a4a2d; --brick-tx:#e8ffe9;
+    --border:#cfe3d6; --shadow:0 14px 34px rgba(20,80,40,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font:16px/1.5 ui-sans-serif,system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial;overflow:auto;transition:background .35s ease,color .35s ease}
+
+  /* Сцены */
+  body.scene-intro{background:radial-gradient(120% 120% at 50% 30%, var(--dark-2), var(--dark)); color:#eafff2}
+  body.scene-pond{
+    background:
+      radial-gradient(120% 80% at 50% 22%, var(--water1), var(--water2) 55%, transparent 56%) no-repeat,
+      linear-gradient(180deg, var(--soil) 0 12%, var(--shore) 12% 18%, transparent 18%) top/100% 22vh,
+      linear-gradient(0deg, var(--soil) 0 12%, var(--shore) 12% 18%, transparent 18%) bottom/100% 22vh,
+      radial-gradient(90% 60% at 0% 50%, var(--shore) 0 18%, transparent 19%) left/22vw 100%,
+      radial-gradient(90% 60% at 100% 50%, var(--shore) 0 18%, transparent 19%) right/22vw 100%,
+      linear-gradient(180deg, var(--water2), var(--water1));
+    background-attachment: fixed, scroll, scroll, scroll, scroll, fixed; color:var(--text);
+  }
+  body.scene-final{background:radial-gradient(120% 120% at 50% 30%, var(--dark-2), var(--dark)); color:#eafff2}
+
+  /* Fade контейнер */
+  .wrap{display:grid;grid-template-rows:48vh auto;min-height:100vh;transition:opacity .45s ease}
+  .wrap.fading{opacity:0}
+  body.scene-intro .wrap, body.scene-final .wrap{grid-template-rows:100vh 0}
+
+  /* Верхняя сцена */
+  .pond{position:relative}
+  .pads{position:absolute;inset:0;pointer-events:none}
+  /* в интро/финале кувшинки прячем полностью */
+  body.scene-intro .pads, body.scene-final .pads{display:none}
+
+  .pad{position:absolute;width:120px;height:120px;transform:translate(-50%,-50%);
+       background:radial-gradient(40% 40% at 30% 30%, var(--lily) 0 60%, var(--lily-dark) 100%);
+       border-radius:50%;box-shadow:0 12px 0 rgba(0,0,0,.06),0 0 0 8px rgba(255,255,255,.35) inset}
+
+  .ripples{position:absolute;inset:0;pointer-events:none;opacity:.18}
+  .ripples:before,.ripples:after{content:"";position:absolute;left:50%;top:50%;width:70vmin;height:70vmin;border-radius:50%;border:8px solid #fff;transform:translate(-50%,-50%);animation:ripple 7s linear infinite}
+  .ripples:after{animation-delay:3.5s}
+  @keyframes ripple{0%{transform:translate(-50%,-50%) scale(.7);opacity:.25}100%{transform:translate(-50%,-50%) scale(1.3);opacity:0}}
+
+  /* Пень — показываем только в intro/final */
+  .stump{display:none;position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);max-width:60vmin;height:auto;pointer-events:none}
+  body.scene-intro .stump, body.scene-final .stump{display:block}
+
+  /* Лягушка */
+  #frog{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);transition:left .45s ease,top .45s ease,transform .2s ease}
+  /* в пруду лягушка прыгает по кувшинкам ниже, тут положение вычисляется JS */
+  body.scene-pond #frog{top:50%}
+  #frog.turn-left{transform:translate(-50%,-50%) scaleX(-1)}
+  #frog.jump{animation:jump .55s ease}
+  @keyframes jump{0%{transform:translate(-50%,-50%)}35%{transform:translate(-50%,-85%)}100%{transform:translate(-50%,-50%)}}
+
+  /* Чистый PNG без подложки/рамки/скругления */
+  #frog img{
+    width:140px;height:auto;display:block;
+    image-rendering:auto;
+    background:transparent;
+    border:none;
+    padding:0;
+    border-radius:0;
+  }
+
+  /* Реплики/кнопки */
+  .speech{position:absolute;left:50%;top:72%;transform:translate(-50%,0);max-width:min(760px,92vw);background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);border-radius:18px;padding:14px 18px;color:#eafff2;backdrop-filter:blur(2px) saturate(130%);box-shadow:0 10px 0 rgba(0,0,0,.12)}
+  .speech strong{color:#fff}
+  .speech .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+  body.scene-pond .speech{display:none}
+
+  .pill{flex:1;min-width:220px;padding:14px 16px;font-weight:900;cursor:pointer;border:none;border-radius:999px;background:linear-gradient(180deg,#6ad27f,#3db565);color:#092c19;box-shadow:0 14px 0 rgba(0,0,0,.12)}
+  .pill.secondary{background:linear-gradient(180deg,#ffd973,#f0b429);color:#3b2a00}
+
+  /* Нижняя панель */
+  .panel{position:relative;padding:22px;margin:18px 5vw 40px;border-radius:22px;background:var(--bubble);border:1px solid var(--bubble-bd);box-shadow:var(--shadow)}
+  body.scene-intro .panel, body.scene-final .panel{display:none}
+
+  .bubble{background:var(--bubble);border:1px solid var(--bubble-bd);border-radius:16px;padding:12px;margin-bottom:12px}
+  .bubble-head{font-weight:800;color:#1c6b3f;margin-bottom:4px}
+  .grid{display:grid;gap:12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .brick input,.brick textarea{width:100%;background:var(--brick);color:var(--brick-tx);border:1px solid var(--brick-bd);border-radius:14px;padding:12px 14px;box-shadow:0 0 0 3px rgba(26,122,77,.18) inset,0 10px 20px rgba(8,60,36,.22) inset}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.4);background:linear-gradient(180deg,#58c47a,#2ea85f);color:#fff;cursor:pointer}
+  .btn.ghost{background:#eaffef;color:#1b6c3e;border:1px solid #bde3c7}
+  .btn.maybe{background:linear-gradient(180deg,#ffd26a,#f0b429)} .btn.no{background:linear-gradient(180deg,#ff8e8e,#ff6b6b)}
+  .btn-group{display:flex;gap:10px;flex-wrap:wrap}
+  .bar-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+
+  /* Вишлист сетка 5×5 + скролл */
+  .wl-wrap{max-height:50vh;overflow:auto;padding-right:6px}
+  .gridVar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;background:rgba(255,255,255,.68);border-radius:14px;padding:10px;border:1px solid var(--border)}
+  .cell{aspect-ratio:1/1;border-radius:16px;cursor:pointer;position:relative;background:radial-gradient(45% 45% at 30% 28%, var(--lily) 0 60%, var(--lily-dark) 100%);box-shadow:0 12px 0 rgba(0,0,0,.05),0 0 0 6px rgba(255,255,255,.35) inset;display:grid;place-items:center;color:#0b3b22}
+  .cell .label{font-weight:900;text-align:center;padding:8px 6px;font-size:.9rem}
+  .cell .status{position:absolute;top:8px;left:8px;font-size:.75rem;font-weight:800;padding:4px 8px;border-radius:999px;color:#06301b;background:#fff9}
+  .cell.taken{filter:saturate(60%) brightness(.9)}
+  .cell .action{position:absolute;bottom:8px;left:8px;right:8px;display:flex;justify-content:center}
+  .cell a{display:inline-block;padding:6px 10px;border-radius:12px;background:#fff;border:1px solid #cde8d5;text-decoration:none;font-weight:700;font-size:.82rem}
+
+  /* Админ/гость */
+  .giftcard{background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px;display:grid;gap:8px}
+  .giftcard .meta{font-size:.85rem;color:var(--muted)}
+  .gift-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .pill-mini{padding:6px 10px;border-radius:999px;font-weight:800;border:none;cursor:pointer}
+  .choose{background:#2ea85f;color:#fff}.unchoose{background:#ff6b6b;color:#fff}.takenTag{background:#ededed;color:#666}
+
+  dialog{border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+  .editor label{display:grid;gap:6px;margin:6px 0}
+  menu{display:flex;gap:10px;justify-content:flex-end;margin:10px 0 0 0;padding:0}
+
+  .list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .list li{background:var(--bubble);border:1px solid var(--bubble-bd);border-radius:12px;padding:10px 12px}
+  .stats{display:flex;gap:12px;flex-wrap:wrap}
+  .stat{background:linear-gradient(180deg,#eaffef,#d7f5e1);border:1px solid #bfe8c5;border-radius:14px;padding:10px 12px;min-width:120px;text-align:center}
+  .num{font-weight:900;font-size:1.5rem}
+  .code-box{font-size:2rem;font-weight:900;background:#eaffef;border:1px solid #bde3c7;display:inline-block;padding:10px 18px;border-radius:12px;margin-top:8px}
+</style>
+</head>
+
+<body class="scene-intro">
+<div class="wrap" id="root">
+
+  <!-- ВЕРХ -->
+  <section class="pond" id="pond">
+    <div class="ripples" aria-hidden="true"></div>
+    <div class="pads" id="pads"></div>
+
+    <!-- Пень (виден только в intro/final через CSS) -->
+    <img id="stumpImg" class="stump" src="assets/stump.png" alt="Пень">
+
+    <!-- Лягушка -->
+    <div id="frog" title="Фрогги — проводник">
+      <img id="frogImg" alt="frog" src="assets/frog_idle.png">
+    </div>
+
+    <!-- Облачко-диалог для intro/final -->
+    <div class="speech" id="speech">
+      <div id="speechText"><strong>Фрогги:</strong> Привет! Создать событие или присоединиться?</div>
+      <div class="actions" id="speechActions">
+        <button class="pill" data-next="create">🧪 Создать</button>
+        <button class="pill secondary" data-next="join">🎉 Присоединиться</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- НИЗ (форма/вишлист/админ/гость — только в сцене пруда) -->
+  <section class="panel" id="slides">
+
+    <!-- ФОРМА -->
+    <section id="slide-create-1" hidden>
+      <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Заполни кирпичики — имя, дата/время, адрес.</div></div>
+      <form id="formCreate" class="grid brick">
+        <label>Название события <input id="eventTitle" required placeholder="День рождения (имя)" /></label>
+        <div class="row2">
+          <label>Дата <input id="eventDate" type="date" required /></label>
+          <label>Время <input id="eventTime" type="time" required /></label>
+        </div>
+        <label>Адрес места проведения <input id="eventAddress" placeholder="Улица, дом, город" /></label>
+        <button class="btn" type="submit">Далее • ква!</button>
+      </form>
+    </section>
+
+    <!-- ВИШЛИСТ (организатор) -->
+    <section id="slide-create-wishlist" hidden>
+      <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Клик по кувшинке — впиши предмет или ссылку.</div></div>
+      <div class="wl-wrap"><div id="wlGrid" class="gridVar"></div></div>
+      <div class="bar-actions">
+        <button class="btn" id="addItem">Добавить кувшинку</button>
+        <button class="btn ghost" id="clearWL">Очистить</button>
+        <button class="btn" id="toDetails">Далее • ква!</button>
+      </div>
+      <dialog id="cellEditor">
+        <form method="dialog" class="editor">
+          <h3>Редактор кувшинки</h3>
+          <label>Название/заметка <input id="cellTitle" /></label>
+          <label>Ссылка <input id="cellUrl" placeholder="https://amazon.com/..."/></label>
+          <menu>
+            <button value="cancel" class="btn ghost">Отмена</button>
+            <button id="saveCell" value="default" class="btn">Сохранить</button>
+          </menu>
+        </form>
+      </dialog>
+    </section>
+
+    <!-- ДЕТАЛИ -->
+    <section id="slide-create-details" hidden>
+      <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Добавь дресс-код, что взять и как пройти.</div></div>
+      <form id="formDetails" class="grid brick">
+        <label>Дресс-код <input id="eventDress" placeholder="Зелёные акценты" /></label>
+        <label>Что взять <input id="eventBring" placeholder="Настроение, фотоаппарат, закуски" /></label>
+        <label>Как пройти / комментарии <textarea id="eventNotes" rows="3" placeholder="Вход со двора, 3 этаж, домофон 12"></textarea></label>
+        <button class="btn" type="submit">Далее • ква!</button>
+      </form>
+    </section>
+
+    <!-- АДМИН -->
+    <section id="slide-admin" hidden>
+      <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Поделись кодом — и к финалу.</div></div>
+      <p><strong>6-значный код события:</strong></p>
+      <div class="code-box" id="eventCode">—</div>
+      <div class="stats" style="margin-top:12px">
+        <div class="stat"><div class="num" id="stYes">0</div><div>Идут</div></div>
+        <div class="stat"><div class="num" id="stMaybe">0</div><div>Возможно</div></div>
+        <div class="stat"><div class="num" id="stNo">0</div><div>Не идут</div></div>
+      </div>
+      <div style="margin-top:10px">
+        <h3>Вишлист (занято/свободно)</h3>
+        <ul id="adminGifts" class="list"></ul>
+      </div>
+      <div class="bar-actions"><button class="btn" id="finishCreate">Перейти к финалу</button></div>
+    </section>
+
+    <!-- JOIN: ввод кода -->
+    <section id="slide-join-code" hidden>
+      <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Введи код и прыгай дальше!</div></div>
+      <div class="grid" style="place-items:center">
+        <input id="joinCodeInput" placeholder="Например: 345812"
+               style="max-width:260px;text-align:center;font-weight:800;color:var(--brick-tx); background:var(--brick); border:1px solid var(--brick-bd); border-radius:12px; padding:12px 14px" />
+        <button class="btn" id="joinCodeBtn">Проверить • ква!</button>
+      </div>
+    </section>
+
+    <!-- JOIN: RSVP -->
+    <section id="slide-join-1" hidden>
+      <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Назовись и отметься: идёшь?</div></div>
+      <form id="formJoin" class="grid brick">
+        <label>Ваше имя <input id="guestName" required placeholder="Имя" autocomplete="name"/></label>
+        <div class="btn-group">
+          <button type="button" class="btn" data-rsvp="yes">Ква! Иду</button>
+          <button type="button" class="btn maybe" data-rsvp="maybe">Возможно</button>
+          <button type="button" class="btn no" data-rsvp="no">Увы, не смогу</button>
+        </div>
+        <button id="toGuestWishlist" class="btn" type="button">Выбрать подарок • ква!</button>
+      </form>
+    </section>
+
+    <!-- JOIN: ВИШЛИСТ ГОСТЯ -->
+    <section id="slide-join-wishlist" hidden>
+      <div class="bubble"><div class="bubble-head">Фрогги:</div>
+        <div class="bubble-body">Выбери один пункт из списка. <strong>Занято</strong> — кто-то уже взял.</div></div>
+      <div id="guestGifts" class="grid" style="gap:10px"></div>
+      <div class="bar-actions">
+        <button class="btn ghost" id="skipWishlist">Пропустить</button>
+        <button class="btn" id="toGuestFinal">Готово • к финалу</button>
+      </div>
+    </section>
+
+  </section>
+</div>
+
+<script>
+/* ассеты — используем прозрачные PNG */
+const FROG_IDLE="assets/frog_idle.png", FROG_JUMP="assets/frog_jump.png";
+const CROAK_URL="assets/croak.mp3";
+
+/* состояние */
+const STORAGE='froggyhub_state_v7';
+let eventData = JSON.parse(localStorage.getItem(STORAGE)||'null') || {
+  id:Math.random().toString(36).slice(2,8),
+  title:'',date:'',time:'',address:'',dress:'',bring:'',notes:'',
+  wishlist:Array.from({length:25},(_,i)=>({id:i+1,title:'',url:'',claimedBy:''})),
+  guests:[], code:null
+};
+const save=()=>localStorage.setItem(STORAGE,JSON.stringify(eventData));
+let currentGuestName='';
+
+/* звук ква */
+let croakAudio=null;
+try{croakAudio=new Audio(CROAK_URL);croakAudio.volume=.75}catch(e){}
+const croak=()=>{if(!croakAudio)return;try{croakAudio.currentTime=0;croakAudio.play();}catch(e){}}
+
+/* DOM */
+const body=document.body, pond=document.getElementById('pond');
+const frog=document.getElementById('frog'), frogImg=document.getElementById('frogImg');
+const padsWrap=document.getElementById('pads');
+const speech=document.getElementById('speech'), speechText=document.getElementById('speechText'), speechActions=document.getElementById('speechActions');
+const root=document.getElementById('root');
+
+/* сцены */
+function setScene(scene){
+  body.classList.remove('scene-intro','scene-pond','scene-final');
+  body.classList.add(`scene-${scene}`);
+  document.getElementById('slides').style.display=(scene==='pond')?'block':'none';
+  // Реплики видимы только в intro/final (скрыты в CSS для pond)
+  speech.style.display=(scene==='pond')?'none':'block';
+}
+
+/* кувшинки (только в пруду) */
+const stepsCreate=['create-1','create-wishlist','create-details','admin'];
+function renderPads(total=stepsCreate.length){
+  padsWrap.innerHTML='';
+  const H=(pond.getBoundingClientRect().height||480), baseY=H*0.70;
+  for(let i=0;i<total;i++){
+    const pad=document.createElement('div');pad.className='pad';
+    const x=12+(i*(75/(total-1||1)));
+    pad.style.left=x+'%';pad.style.top=(i%2?baseY-60:baseY)+'px';padsWrap.appendChild(pad);
+  }
+}
+
+/* ПЛАВНОЕ ЗАТУХАНИЕ */
+function withTransition(next){
+  root.classList.add('fading');
+  setTimeout(()=>{ next&&next(); root.classList.remove('fading'); }, 450);
+}
+
+/* прыжок лягушки по кувшинкам (в пруду) */
+function frogJumpToPad(index,faceRight=true){
+  const pad=padsWrap.children[index]; if(!pad) return;
+  const rect=pad.getBoundingClientRect(), stage=document.body.getBoundingClientRect();
+  frog.style.left=(rect.left+rect.width/2-stage.left)+'px';
+  frog.style.top =(rect.top +rect.height*0.52-stage.top )+'px';
+  frog.classList.remove('turn-left'); if(!faceRight) frog.classList.add('turn-left');
+  frogImg.src=FROG_JUMP; frog.classList.remove('jump'); void frog.offsetWidth; frog.classList.add('jump'); croak();
+  setTimeout(()=>{ frogImg.src=FROG_IDLE; },550);
+}
+
+/* показать слайд (нижняя панель) */
+function showSlide(id){
+  document.querySelectorAll('#slides > section').forEach(s=>s.hidden=true);
+  document.getElementById('slide-'+id).hidden=false;
+}
+
+/* интро — лягушка сидит на пне */
+setScene('intro');
+speechText.innerHTML="<strong>Фрогги:</strong> Привет! Создать событие или присоединиться?";
+speechActions.innerHTML=`<button class="pill" data-next="create">🧪 Создать</button><button class="pill secondary" data-next="join">🎉 Присоединиться</button>`;
+speechActions.onclick=(e)=>{
+  const btn=e.target.closest('button'); if(!btn) return;
+  withTransition(()=>{
+    if(btn.dataset.next==='create'){
+      setScene('pond'); renderPads(stepsCreate.length);
+      frogJumpToPad(0,true); showSlide('create-1');
+    } else {
+      setScene('pond'); renderPads(3);
+      frogJumpToPad(0,false); showSlide('join-code');
+    }
+  });
+};
+
+/* форма */
+document.getElementById('formCreate').addEventListener('submit',(e)=>{
+  e.preventDefault();
+  const title=eventTitle.value.trim(), date=eventDate.value, time=eventTime.value, address=eventAddress.value.trim();
+  if(!title||!date||!time){ alert('Заполни название, дату и время'); return; }
+  Object.assign(eventData,{title,date,time,address}); save();
+  withTransition(()=>{ frogJumpToPad(1,true); showSlide('create-wishlist'); renderGrid(); });
+});
+
+/* вишлист (организатор) */
+const wlGrid=document.getElementById('wlGrid'), editor=document.getElementById('cellEditor');
+const cellTitle=document.getElementById('cellTitle'), cellUrl=document.getElementById('cellUrl'); let currentCellId=null;
+
+function renderGrid(){
+  wlGrid.innerHTML='';
+  // фиксированная сетка 5×5 + возможность добавлять больше
+  wlGrid.style.gridTemplateColumns=`repeat(5,1fr)`;
+  eventData.wishlist.forEach(cell=>{
+    const div=document.createElement('div'); div.className='cell'+(cell.claimedBy?' taken':''); div.dataset.id=cell.id;
+    div.innerHTML=`${cell.claimedBy?'<div class="status">Занято</div>':'<div class="status" style="background:#d8ffdb">Свободно</div>'}
+                   <div class="label">${cell.title||''}</div>
+                   <div class="action">${cell.url?`<a href="${cell.url}" target="_blank" rel="noopener">Открыть</a>`:''}</div>`;
+    div.addEventListener('click',()=>openEditor(cell.id)); wlGrid.appendChild(div);
+  });
+}
+function openEditor(id){ currentCellId=id; const c=eventData.wishlist.find(x=>x.id===id); cellTitle.value=c.title||''; cellUrl.value=c.url||''; editor.showModal?editor.showModal():editor.setAttribute('open',''); }
+saveCell.onclick=()=>{ const c=eventData.wishlist.find(x=>x.id===currentCellId); c.title=cellTitle.value.trim(); c.url=cellUrl.value.trim(); save(); renderGrid(); };
+clearWL.onclick=()=>{ eventData.wishlist.forEach(c=>{c.title='';c.url='';c.claimedBy='';}); save(); renderGrid(); };
+addItem.onclick=()=>{ const nextId=eventData.wishlist.length?Math.max(...eventData.wishlist.map(i=>i.id))+1:1; eventData.wishlist.push({id:nextId,title:'',url:'',claimedBy:''}); save(); renderGrid(); };
+toDetails.onclick=()=>withTransition(()=>{ frogJumpToPad(2,true); showSlide('create-details'); });
+editor.addEventListener('click',e=>{ const r=editor.getBoundingClientRect(); if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) editor.close(); });
+
+/* детали + код */
+formDetails.addEventListener('submit',(e)=>{
+  e.preventDefault();
+  Object.assign(eventData,{dress:eventDress.value.trim(),bring:eventBring.value.trim(),notes:eventNotes.value.trim()});
+  eventData.code=(Math.floor(100000+Math.random()*900000)).toString(); save();
+  withTransition(()=>{ frogJumpToPad(3,true); showSlide('admin'); renderAdmin(); });
+});
+function renderAdmin(){
+  eventCode.textContent=eventData.code||'—';
+  const html=(eventData.wishlist.filter(i=>i.title||i.url).map(i=>`${i.title||'Подарок'} — ${i.claimedBy?'🔒 занято':'🟢 свободно'} ${i.url?`• <a href="${i.url}" target="_blank">ссылка</a>`:''}`)).map(s=>`<li>${s}</li>`).join('');
+  adminGifts.innerHTML=html||'<li>Вишлист пуст</li>';
+}
+finishCreate.onclick=()=>withTransition(()=>toFinalScene());
+
+/* JOIN: код → RSVP */
+joinCodeBtn.onclick=()=>{
+  const v=(joinCodeInput.value||'').trim();
+  if(!v){alert('Введите код');return;}
+  if(!eventData.code){alert('Код ещё не создан');return;}
+  if(v===eventData.code){ withTransition(()=>{ showSlide('join-1'); renderPads(3); frogJumpToPad(1,false); }); }
+  else alert('Неверный код');
+};
+
+/* RSVP */
+document.querySelectorAll('[data-rsvp]').forEach(b=>b.addEventListener('click',e=>{
+  const code=e.currentTarget.dataset.rsvp, name=(guestName.value||'').trim();
+  if(!name){alert('Введите имя');return;}
+  currentGuestName=name;
+  const ex=eventData.guests.find(g=>g.name.toLowerCase()===name.toLowerCase());
+  if(ex) ex.rsvp=code; else eventData.guests.push({name,rsvp:code});
+  save(); croak();
+}));
+toGuestWishlist.onclick=()=>{
+  const name=(guestName.value||'').trim(); if(!name){alert('Введите имя и статус');return;}
+  currentGuestName=name; withTransition(()=>{ showSlide('join-wishlist'); renderGuestWishlist(); frogJumpToPad(2,false); });
+};
+
+/* ГОСТЕВОЙ ВИШЛИСТ */
+const guestGifts=document.getElementById('guestGifts');
+function renderGuestWishlist(){
+  const items=eventData.wishlist.filter(i=>i.title||i.url);
+  guestGifts.innerHTML=items.map(item=>{
+    const me=item.claimedBy && item.claimedBy.toLowerCase()===currentGuestName.toLowerCase();
+    const taken=!!item.claimedBy && !me;
+    const status=taken?`<span class="pill-mini takenTag">Занято</span>`:me?`<span class="pill-mini" style="background:#d8ffdb;color:#0b3b22">Вы выбрали</span>`:`<span class="pill-mini" style="background:#fff8c6;color:#614a00">Свободно</span>`;
+    const chooseBtn=taken?'': me ? `<button data-id="${item.id}" class="pill-mini unchoose">Снять выбор</button>` : `<button data-id="${item.id}" class="pill-mini choose">Выбрать</button>`;
+    const link=item.url?` • <a href="${item.url}" target="_blank" rel="noopener">ссылка</a>`:'';
+    return `<div class="giftcard"><div><strong>${item.title||'Подарок'}</strong><span class="meta">${link}</span></div><div class="gift-actions">${status}${chooseBtn}</div></div>`;
+  }).join('');
+  guestGifts.querySelectorAll('.choose').forEach(b=>b.addEventListener('click',e=>{
+    const id=+e.currentTarget.dataset.id; const it=eventData.wishlist.find(x=>x.id===id);
+    if(it.claimedBy && it.claimedBy.toLowerCase()!==currentGuestName.toLowerCase()){ alert('Этот подарок уже выбрали'); return; }
+    eventData.wishlist.forEach(x=>{ if(x.claimedBy && x.claimedBy.toLowerCase()===currentGuestName.toLowerCase()) x.claimedBy=''; });
+    it.claimedBy=currentGuestName; save(); renderGuestWishlist();
+  }));
+  guestGifts.querySelectorAll('.unchoose').forEach(b=>b.addEventListener('click',e=>{
+    const id=+e.currentTarget.dataset.id; const it=eventData.wishlist.find(x=>x.id===id);
+    if(it.claimedBy && it.claimedBy.toLowerCase()===currentGuestName.toLowerCase()){ it.claimedBy=''; save(); renderGuestWishlist(); }
+  }));
+}
+
+skipWishlist.onclick=()=>withTransition(()=>toFinalScene());
+toGuestFinal.onclick=()=>withTransition(()=>toFinalScene());
+
+/* ФИНАЛ — лягушка снова на пне, краткая сводка */
+function toFinalScene(){
+  setScene('final'); frog.style.left='50%'; frog.style.top='42%'; croak();
+  const q=encodeURIComponent(eventData.address||''), addr=eventData.address?`<a style="color:#fff" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">${eventData.address}</a>`:'—';
+  const chosenCount=eventData.wishlist.filter(i=>i.claimedBy).length, totalWishes=eventData.wishlist.filter(i=>i.title||i.url).length, freeCount=totalWishes-chosenCount;
+  speech.style.display='block';
+  speechText.innerHTML=`<strong>${eventData.title||'Событие'}</strong><br>📅 ${eventData.date||'—'} • ⏰ ${eventData.time||'—'} • 📍 ${addr}<br>👗 ${eventData.dress||'—'} • 🧺 ${eventData.bring||'—'}<br>🎁 Пожелания: занято ${chosenCount} • свободно ${freeCount}<br>До начала: <span id="countdown">—</span>`;
+  document.getElementById('speechActions').innerHTML=`<button class="pill secondary" id="backToPond">Назад</button>`;
+  backToPond.onclick=()=>withTransition(()=>{ setScene('pond'); showSlide('admin'); renderPads(stepsCreate.length); frogJumpToPad(3,true); renderAdmin(); });
+
+  function tick(){ const out=document.getElementById('countdown'); if(!eventData.date||!eventData.time){ out.textContent='—'; return; }
+    const t=new Date(`${eventData.date}T${eventData.time}`)-new Date(); if(t<=0){ out.textContent='началось!'; return; }
+    const d=Math.floor(t/86400000),h=Math.floor((t%86400000)/3600000),m=Math.floor((t%3600000)/60000),s=Math.floor((t%60000)/1000);
+    out.textContent=`${d}д ${h}ч ${m}м ${s}с`; }
+  tick(); clearInterval(window._final_cd); window._final_cd=setInterval(tick,1000);
+}
+
+/* старт */
+function initIntro(){ renderPads(3); }
+initIntro();
+window.addEventListener('resize',()=>{ if(body.classList.contains('scene-pond')) renderPads(); });
+</script>
+</body>
+</html>
