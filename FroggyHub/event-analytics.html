@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Аналитика события</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container" role="main">
+    <div class="card" id="eventHead">
+      <div class="hero">
+        <div class="hero-text">
+          <h1 id="eventTitle">Событие</h1>
+          <div class="chips">
+            <span class="chip" id="eventDate">—</span>
+            <span class="chip" id="eventTime">—</span>
+            <span class="chip" id="eventAddr">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="bar-actions">
+        <button class="btn ghost small" id="backBtn" aria-label="Назад в меню">Назад</button>
+        <button class="btn small" id="editEventBtn" aria-label="Редактировать событие">Редактировать событие</button>
+      </div>
+    </div>
+
+    <section class="card" id="visitorsBlock" aria-labelledby="visitorsTitle">
+      <h2 id="visitorsTitle">Посетители</h2>
+      <div class="stats">
+        <span class="badge yes" id="rsvpYesCount">0</span>
+        <span class="badge maybe" id="rsvpMaybeCount">0</span>
+        <span class="badge no" id="rsvpNoCount">0</span>
+      </div>
+      <div class="progress" id="rsvpProgress" aria-hidden="true">
+        <div class="yes" id="rsvpYesBar"></div>
+        <div class="maybe" id="rsvpMaybeBar"></div>
+        <div class="no" id="rsvpNoBar"></div>
+      </div>
+      <ul id="visitorsList" class="ea-list" role="list" aria-describedby="visitorsHint"></ul>
+      <p id="visitorsHint" class="hint">Статусы: 🟢 Иду, 🟡 Возможно, 🔴 Не иду</p>
+    </section>
+
+    <section class="card" id="wishlistBlock" aria-labelledby="wishlistTitle">
+      <h2 id="wishlistTitle">Wishlist</h2>
+      <div class="stats">
+        <span class="badge free" id="giftFreeCount">0</span>
+        <span class="badge taken" id="giftTakenCount">0</span>
+      </div>
+      <div class="progress" id="giftProgress" aria-hidden="true">
+        <div class="free" id="giftFreeBar"></div>
+        <div class="taken" id="giftTakenBar"></div>
+      </div>
+      <ul id="wishlistList" class="wl-list" role="list" aria-describedby="wishlistHint"></ul>
+      <p id="wishlistHint" class="hint">🟢 свободно, 🔒 занято</p>
+    </section>
+
+    <p id="error" class="error" role="status" aria-live="polite"></p>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script>
+    window.SUPABASE_URL = "https://smamhlfzserjkdfhthwhdv.supabase.co";
+    window.PROXY_SUPABASE_URL = location.origin + '/supabase';
+    window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtYW1obGZ6ZXJqa2RmaHR3aGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxMzQ0MzYsImV4cCI6MjA3MDcxMDQzNn0.PwRF3OAtlpJ7zu2lsIb46V7XLINlyhfC97Jgbu--Vv4";
+  </script>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    window.createSupabaseClient = createClient;
+  </script>
+  <script type="module" src="event-analytics.js"></script>
+</body>
+</html>

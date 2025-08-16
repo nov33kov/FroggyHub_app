@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Профиль</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container" role="main">
+    <div class="card" style="max-width:480px;margin:40px auto">
+      <h1>Профиль</h1>
+      <form id="changePassForm" class="grid" aria-describedby="changePassError">
+        <label>Текущий пароль
+          <input id="currPass" type="password" required autocomplete="current-password">
+        </label>
+        <label>Новый пароль
+          <input id="newProfilePass" type="password" minlength="4" required autocomplete="new-password">
+        </label>
+        <label>Повторите новый пароль
+          <input id="newProfilePass2" type="password" minlength="4" required autocomplete="new-password">
+        </label>
+        <button type="button" class="btn primary" id="changePassBtn">Сменить пароль</button>
+        <div id="changePassError" class="form-error" aria-live="polite"></div>
+      </form>
+      <hr>
+      <button type="button" class="btn no" id="deleteAccountBtn">Удалить аккаунт</button>
+      <p class="hint">Удаление необратимо</p>
+    </div>
+  </main>
+  <dialog id="deleteConfirm">
+    <p>Точно удалить аккаунт? Это действие нельзя отменить.</p>
+    <div class="row2">
+      <button class="btn no" id="confirmDeleteBtn">Удалить</button>
+      <button class="btn" value="cancel">Отмена</button>
+    </div>
+  </dialog>
+  <script>
+    window.SUPABASE_URL = "https://smamhlfzserjkdfhthwhdv.supabase.co";
+    window.PROXY_SUPABASE_URL = location.origin + '/supabase';
+    window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtYW1obGZ6ZXJqa2RmaHR3aGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxMzQ0MzYsImV4cCI6MjA3MDcxMDQzNn0.PwRF3OAtlpJ7zu2lsIb46V7XLINlyhfC97Jgbu--Vv4";
+  </script>
+  <script defer type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"></script>
+  <script defer src="app.js"></script>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <div id="sessionBanner" role="status" aria-live="polite" hidden>Сессия истекла, войдите снова</div>
+</body>
+</html>

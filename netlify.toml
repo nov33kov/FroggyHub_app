@@ -1,0 +1,15 @@
+[build]
+  command = ""
+  publish = "FroggyHub"
+
+[build.environment]
+  SUPABASE_URL = "..."
+  SUPABASE_SERVICE_ROLE_KEY = "..."
+  DEBUG_ANALYTICS = "false"
+
+[functions]
+  directory = "api"
+  node_bundler = "esbuild"
+
+[functions."sync-secondary"]
+  schedule = "@hourly"

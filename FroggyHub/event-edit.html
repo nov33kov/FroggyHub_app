@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Редактирование события</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container" role="main">
+    <form id="editForm" class="card grid edit-form" aria-describedby="editError">
+      <h1>Редактировать событие</h1>
+      <label>Название
+        <input id="editTitle" required aria-required="true" />
+      </label>
+      <label>Дата
+        <input id="editDate" type="date" required aria-required="true" />
+      </label>
+      <label>Время
+        <input id="editTime" type="time" required aria-required="true" />
+      </label>
+      <label>Адрес
+        <input id="editAddress" />
+      </label>
+      <label>Заметки
+        <textarea id="editNotes"></textarea>
+      </label>
+      <label>Дресс-код
+        <input id="editDress" />
+      </label>
+      <label>Что взять
+        <input id="editBring" />
+      </label>
+      <div class="save-row">
+        <button id="saveEvent" type="submit" class="btn primary">Сохранить</button>
+      </div>
+    </form>
+    <p id="editError" class="error" role="status" aria-live="polite"></p>
+  </main>
+  <script>
+    window.SUPABASE_URL = "https://smamhlfzserjkdfhthwhdv.supabase.co";
+    window.PROXY_SUPABASE_URL = location.origin + '/supabase';
+    window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtYW1obGZ6ZXJqa2RmaHR3aGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxMzQ0MzYsImV4cCI6MjA3MDcxMDQzNn0.PwRF3OAtlpJ7zu2lsIb46V7XLINlyhfC97Jgbu--Vv4";
+  </script>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    window.createSupabaseClient = createClient;
+  </script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

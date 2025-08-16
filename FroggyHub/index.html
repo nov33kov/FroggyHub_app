@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>FroggyHub — события и вишлисты</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="scene-intro">
+  <!-- ЭКРАН 1: ВХОД / РЕГИСТРАЦИЯ -->
+  <div id="screen-auth" class="container" role="main">
+    <div class="card" id="authPanel" style="max-width:620px;margin:40px auto">
+      <div class="hero">
+        <div class="avatar frog-ava">🐸</div>
+        <div class="hero-text">
+          <h1>Вход / Регистрация</h1>
+          <div class="chips">
+            <span class="chip">Шаг 1</span>
+            <span class="chip">Профиль</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Auth">
+        <button id="tab-login" class="tab is-active" role="tab" aria-controls="pane-login" aria-selected="true">Войти</button>
+        <button id="tab-register" class="tab" role="tab" aria-controls="pane-register" aria-selected="false">Регистрация</button>
+      </div>
+
+      <section id="pane-login" class="pane grid" role="tabpanel" aria-labelledby="tab-login">
+        <label>Никнейм
+          <input id="login-nickname" type="text" placeholder="Никнейм" required autocomplete="username">
+        </label>
+        <label>Пароль
+          <input id="login-password" type="password" placeholder="••••••••" minlength="4" required autocomplete="current-password">
+        </label>
+        <button type="button" class="btn primary" id="login-btn" data-action="login">Войти</button>
+        <button type="button" class="btn" id="showReset" data-forgot="false">Забыли пароль?</button>
+        <div id="resetPassBlock" class="grid is-hidden">
+          <label>Новый пароль
+            <input id="resetPass" type="password" minlength="4" autocomplete="new-password">
+          </label>
+          <label>Повторите пароль
+            <input id="resetPass2" type="password" minlength="4" autocomplete="new-password">
+          </label>
+        </div>
+        <div id="login-status" aria-live="polite"></div>
+      </section>
+
+      <section id="pane-register" class="pane grid is-hidden" role="tabpanel" aria-labelledby="tab-register">
+        <label>Имя / Никнейм
+          <input id="signup-nickname" required minlength="2" autocomplete="nickname">
+        </label>
+        <label>Пароль
+          <input id="signup-password" type="password" required minlength="4" autocomplete="new-password">
+        </label>
+        <label>Повтор пароля
+          <input id="signup-password2" type="password" required minlength="4" autocomplete="new-password">
+        </label>
+        <button id="signup-btn" class="btn primary" type="button" data-action="signup">Зарегистрироваться</button>
+        <div id="reg-status" aria-live="polite"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 2: ГЛАВНОЕ МЕНЮ -->
+  <div id="screen-lobby" class="container" hidden>
+    <div class="card" style="max-width:760px;margin:28px auto">
+      <div class="hero">
+        <div class="avatar frog-ava">🐸</div>
+        <div class="hero-text">
+          <h1>Главное меню</h1>
+          <div class="chips">
+            <span class="chip">Шаг 2</span>
+            <span class="pill" data-user-badge>гость</span>
+            <button class="btn ghost small" id="logout-btn" data-action="logout" title="Выйти">Выйти</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <button class="btn primary" id="goCreate" data-requires-auth data-action="create-event">🧪 Создать ивент</button>
+        <div class="card inner">
+          <h3>Присоединиться к ивенту</h3>
+          <div class="row2">
+            <input id="join-code" placeholder="Введите 6-значный код" inputmode="numeric" pattern="\d*" autocomplete="one-time-code" maxlength="6">
+            <button class="btn" id="join-btn" data-action="join-event" disabled>🎉 Присоединиться</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 3: ПРУД + ФИНАЛ -->
+  <div id="screen-app" hidden>
+    <div class="wrap" id="root">
+      <section class="pond" id="pond">
+        <div class="ripples" aria-hidden="true"></div>
+        <div class="pads" id="pads"></div>
+
+        <!-- БОЛЬШИЕ ЧАСЫ (в финале переезжают в левую колонку) -->
+        <div id="bigClock" class="big-clock" hidden>
+          <div class="hm" id="bigClockHM">00:00</div>
+          <div class="days" id="bigClockDays">0 дней</div>
+        </div>
+
+        <!-- Пень и лягушка -->
+        <img id="stumpImg" class="stump" src="assets/stump.png" alt="Пень" />
+        <div id="frog"><img id="frogImg" src="assets/frog_idle.png" alt="Frog" /></div>
+
+        <!-- ФИНАЛЬНАЯ РАСКЛАДКА: ДВЕ КОЛОНКИ -->
+        <div id="finalLayout" class="final-layout" hidden>
+          <div id="finalLeft" class="final-left" aria-hidden="false"></div>
+          <div id="finalRight" class="final-right">
+            <div class="final-card">
+              <header class="final-header">
+                <div class="title" id="fTitle">Событие</div>
+                <!-- chips были лишними — скрываем -->
+                <div class="final-chips" id="fChips" hidden>
+                  <span class="chip" id="fDateChip">—</span>
+                  <span class="chip" id="fTimeChip">—</span>
+                  <span class="chip" id="fAddrChip">—</span>
+                </div>
+              </header>
+
+              <section class="final-main">
+                <div class="tagline" id="fNotes">Описание / детали.</div>
+
+                <div class="meta">
+                  <div class="meta-item">Дресс-код: <strong id="fDress">—</strong></div>
+                  <div class="meta-item">Что взять: <strong id="fBring">—</strong></div>
+                </div>
+
+                <div class="wl-block">
+                  <div class="wl-head">
+                    <h3>Wishlist</h3>
+                    <div class="wl-legend">
+                      <span class="pill-mini">🟢 свободно</span>
+                      <span class="pill-mini">🔒 занято</span>
+                    </div>
+                  </div>
+                  <div id="fWishlist" class="wl-scroll"></div>
+                </div>
+
+                <div class="dashboard">
+                  <div class="db-card" id="fStats"></div>
+                  <div class="db-card" id="fShare"></div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Подсказки (только для интро) -->
+        <div class="speech" id="speech">
+          <div id="speechText"><strong>Фрогги:</strong> Готовы начать?</div>
+          <div class="actions" id="speechActions">
+            <button class="pill" data-next="create" data-requires-auth>🧪 Создать</button>
+            <button class="pill secondary" data-next="join">🎉 Присоединиться</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- НИЖНЯЯ ПАНЕЛЬ / ШАГИ -->
+      <section class="panel" id="slides">
+        <!-- СОЗДАТЬ: форма события -->
+        <section id="slide-create-1" hidden>
+          <div class="bubble">
+            <div class="bubble-head">Фрогги:</div>
+            <div class="bubble-body">Название, дата, время, адрес.</div>
+          </div>
+          <form id="formCreate" class="grid brick">
+            <label>Название события <input id="eventTitle" required /></label>
+            <div class="row2">
+              <label>Дата <input id="eventDate" type="date" required /></label>
+              <label>Время <input id="eventTime" type="time" required /></label>
+            </div>
+            <label>Адрес <input id="eventAddress" placeholder="Улица, дом, город" /></label>
+            <button class="btn" type="submit">Далее</button>
+          </form>
+        </section>
+
+        <!-- СОЗДАТЬ: вишлист -->
+        <section id="slide-create-wishlist" hidden>
+          <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Добавьте пожелания.</div></div>
+          <div class="wl-wrap"><div id="wlGrid" class="gridVar"></div></div>
+          <div class="bar-actions">
+            <button class="btn" id="addItem">Добавить</button>
+            <button class="btn ghost" id="clearWL">Очистить</button>
+            <button class="btn" id="toDetails">Далее</button>
+          </div>
+          <dialog id="cellEditor" aria-modal="true" role="dialog">
+            <form method="dialog" class="editor">
+              <h3>Редактор</h3>
+              <label>Название <input id="cellTitle" /></label>
+              <label>Ссылка <input id="cellUrl" placeholder="https://..." /></label>
+              <menu>
+                <button value="cancel" class="btn ghost">Отмена</button>
+                <button id="saveCell" value="default" class="btn">Сохранить</button>
+              </menu>
+            </form>
+          </dialog>
+        </section>
+
+        <!-- СОЗДАТЬ: доп. условия -->
+        <section id="slide-create-details" hidden>
+          <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Дресс-код, что взять, комментарии.</div></div>
+          <form id="formDetails" class="grid brick">
+            <label>Дресс-код <input id="eventDress" /></label>
+            <label>Что взять <input id="eventBring" /></label>
+            <label>Как пройти / комментарии <textarea id="eventNotes" rows="3"></textarea></label>
+            <button class="btn" type="submit" data-requires-auth>Сгенерировать код</button>
+          </form>
+          <p id="createEventStatus" class="error" role="status" aria-live="polite"></p>
+        </section>
+
+        <!-- СОЗДАТЬ: админ -->
+        <section id="slide-admin" hidden>
+          <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Поделитесь кодом.</div></div>
+          <p><strong>Код события:</strong> <span class="code-box" id="eventCode">—</span> <button class="btn small" id="copyCodeBtn">Скопировать код</button> <a id="analyticsLink" class="btn small" href="#" hidden>Аналитика события</a></p>
+          <p id="codeExpire" class="hint"></p>
+          <h3>Вишлист</h3>
+          <ul id="adminGifts" class="list"></ul>
+          <div class="bar-actions"><button class="btn" id="finishCreate">К финальной инфо</button></div>
+        </section>
+
+        <!-- ПРИСОЕДИНИТЬСЯ: код -->
+        <section id="slide-join-code" hidden>
+          <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Введите код.</div></div>
+          <div class="grid" style="place-items:center">
+            <input id="joinCodeInput" placeholder="Например: 345812" style="max-width:260px;text-align:center" inputmode="numeric" pattern="\d*" autocomplete="one-time-code" maxlength="6" />
+            <button class="btn" id="joinCodeBtn" disabled>Проверить</button>
+            <div id="joinCodeError" class="error" role="status" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <!-- ПРИСОЕДИНИТЬСЯ: имя + RSVP -->
+        <section id="slide-join-1" hidden>
+          <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Ваше имя и статус участия.</div></div>
+          <form id="formJoin" class="grid brick">
+            <label>Имя <input id="guestName" required /></label>
+            <div class="btn-group">
+              <button type="button" class="btn yes" data-rsvp="yes">Иду</button>
+              <button type="button" class="btn maybe" data-rsvp="maybe">Возможно</button>
+              <button type="button" class="btn no" data-rsvp="no">Не иду</button>
+            </div>
+            <button id="toGuestWishlist" class="btn" type="button">Выбрать подарок</button>
+          </form>
+        </section>
+
+        <!-- ПРИСОЕДИНИТЬСЯ: вишлист гостя -->
+        <section id="slide-join-wishlist" hidden>
+          <div class="bubble"><div class="bubble-head">Фрогги:</div><div class="bubble-body">Выберите один пункт.</div></div>
+          <div id="guestGifts" class="wishlist-grid"></div>
+          <div class="bar-actions">
+            <button class="btn ghost" id="skipWishlist">Пропустить</button>
+            <button class="btn" id="toGuestFinal">Готово</button>
+          </div>
+        </section>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // TODO: заполнить для проды через переменные окружения Netlify
+    window.SUPABASE_URL = "https://smamhlfzserjkdfhthwhdv.supabase.co";
+    window.PROXY_SUPABASE_URL = location.origin + '/supabase';
+    window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtYW1obGZ6ZXJqa2RmaHR3aGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxMzQ0MzYsImV4cCI6MjA3MDcxMDQzNn0.PwRF3OAtlpJ7zu2lsIb46V7XLINlyhfC97Jgbu--Vv4";
+  </script>
+  <script defer type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"></script>
+  <script defer src="app.js"></script>
+  <div id="sessionBanner" role="status" aria-live="polite" hidden>Сессия истекла, войдите снова</div>
+  <dialog id="otpModal">
+    <form method="dialog" class="grid">
+      <p>Войти по ссылке</p>
+      <label>Почта
+        <input id="otpEmail" type="email" required>
+      </label>
+      <div class="row2">
+        <button class="btn primary" id="otpSendBtn" type="button">Отправить ссылку</button>
+        <button class="btn" value="cancel">Отмена</button>
+      </div>
+      <p id="otpStatus" class="hint" aria-live="polite"></p>
+    </form>
+  </dialog>
+    <div id="cookieBanner" role="dialog" aria-modal="true" hidden>
+      <div class="cookie-text">
+        <p>Мы используем cookies. Согласны?</p>
+        <label><input type="checkbox" id="cookieAnalytics"> Аналитика</label>
+        <div id="cookieStatus" class="visually-hidden" aria-live="polite"></div>
+      </div>
+      <div class="cookie-actions">
+        <button id="cookieAccept" type="button" class="btn yes">Принять все</button>
+        <button id="cookieDecline" type="button" class="btn ghost">Сохранить выбор</button>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+  </html>

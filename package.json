@@ -1,0 +1,22 @@
+
+{
+  "name": "froggyhub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "serve:functions": "netlify functions:serve",
+    "test": "npm run test:syntax && node tools/smoke.mjs",
+    "test:syntax": "node --check FroggyHub/app.js && node --check api/join-by-code.js && node --check api/event-by-code.js && node --check api/create-event.js && node --check api/local-signup.js && node --check api/local-login.js && node --check api/local-logout.js && node --check FroggyHub/event-analytics.js && node --check api/get-event-analytics.js && node --check api/update-event.js && node --check api/get-event-details.js && node --check api/delete-account.js && node --check api/sync-secondary.js && node --check api/_lib/db-sync.js && node --check api/auth-register.js && node --check api/auth-login.js && node --check api/_lib/db.js && node --check api/_lib/http.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.42.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3",
+    "@netlify/neon": "^0.1.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}

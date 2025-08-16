@@ -1,0 +1,12 @@
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Content-Security-Policy: default-src 'self' https:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; connect-src 'self' https://*.supabase.co https://*.supabase.net wss://*.supabase.co wss://*.supabase.net;
+
+/supabase/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Headers: authorization, x-client-info, apikey, content-type
+  Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS
+  Cache-Control: no-store
