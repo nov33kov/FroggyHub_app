@@ -16,12 +16,21 @@ export async function handler(event) {
     const { count } = await client.from('local_users').select('id', { count: 'exact', head: true }).eq('username', username);
     if (count && count > 0) return { statusCode: 409, body: 'username taken' };
     const password_hash = await bcrypt.hash(password, 10);
-    const { data, error } = await client.from('local_users').insert({ username, password_hash }).select('id, username').single();
+    const { data, error } = await client
+      .from('local_users')
+      .insert({ username, password_hash })
+      .select('id, username')
+      .single();
     if (error) throw error;
-    const access_token = jwt.sign({ sub: data.id, role: 'authenticated' }, process.env.SUPABASE_JWT_SECRET, { expiresIn: '1h' });
+    const access_token = jwt.sign(
+      { sub: data.id, role: 'authenticated' },
+      process.env.SUPABASE_JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    const domain = process.env.COOKIE_DOMAIN ? `Domain=${process.env.COOKIE_DOMAIN}; ` : '';
     const headers = {
       'Content-Type': 'application/json',
-      'Set-Cookie': `sb-access-token=${access_token}; HttpOnly; Path=/; Max-Age=3600`
+      'Set-Cookie': `sb-access-token=${access_token}; ${domain}HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Lax`
     };
     return { statusCode: 200, headers, body: JSON.stringify({ access_token, user: data }) };
   } catch (err) {

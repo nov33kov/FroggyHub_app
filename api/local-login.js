@@ -15,10 +15,15 @@ export async function handler(event) {
     const match = await bcrypt.compare(password, userRow.password_hash || '');
     if (!match) return { statusCode: 401, body: 'Invalid credentials' };
     await client.from('local_users').update({ last_login: new Date().toISOString() }).eq('id', userRow.id);
-    const access_token = jwt.sign({ sub: userRow.id, role: 'authenticated' }, process.env.SUPABASE_JWT_SECRET, { expiresIn: '1h' });
+    const access_token = jwt.sign(
+      { sub: userRow.id, role: 'authenticated' },
+      process.env.SUPABASE_JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    const domain = process.env.COOKIE_DOMAIN ? `Domain=${process.env.COOKIE_DOMAIN}; ` : '';
     const headers = {
       'Content-Type': 'application/json',
-      'Set-Cookie': `sb-access-token=${access_token}; HttpOnly; Path=/; Max-Age=3600`
+      'Set-Cookie': `sb-access-token=${access_token}; ${domain}HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Lax`
     };
     return { statusCode: 200, headers, body: JSON.stringify({ access_token, user: { id: userRow.id, username: userRow.username } }) };
   } catch (err) {
