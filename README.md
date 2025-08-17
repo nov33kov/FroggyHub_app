@@ -16,18 +16,20 @@ psql "$SUPABASE_DB_URL" < supabase.sql
 ```
 
 ## Netlify functions
-Two serverless functions use the service role key to interact with Supabase:
+Two serverless functions use the service role key (`SUPABASE_SERVICE_ROLE_KEY`) to interact with Supabase:
 
 - `api/join-by-code.js` – joins the current user to an event by code.
 - `api/event-by-code.js` – returns event information, participants and wishlist.
 
-Configure the connection credentials in `netlify.toml`:
+Configure the connection credentials in `netlify.toml` or the Netlify dashboard:
 
 ```toml
 [build.environment]
 SUPABASE_URL = "..."
 SUPABASE_SERVICE_ROLE_KEY = "..."
 ```
+
+The former `SUPABASE_SERVICE_KEY` name is still accepted as a fallback for older deployments.
 
 ## Secondary sync (Neon)
 
