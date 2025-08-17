@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+
 export const json = (code, data) => ({
   statusCode: code,
   headers: {
@@ -19,6 +21,12 @@ export async function getUserFromAuth(event) {
   });
   if (!r.ok) throw new Error('INVALID_TOKEN');
   return await r.json(); // { id, ... }
+}
+
+export async function getSupabaseUser(event) {
+  const user = await getUserFromAuth(event);
+  const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return { client, user };
 }
 
 export function clientIp(event){
