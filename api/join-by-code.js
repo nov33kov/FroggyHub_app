@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseUser } from './_utils.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -9,10 +9,7 @@ export async function handler(event) {
     if (!code) {
       return { statusCode: 400, body: 'code required' };
     }
-    const token = event.headers.authorization?.split(' ')[1] || event.headers.Authorization?.split(' ')[1];
-    const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { data: { user } } = await client.auth.getUser(token);
-    if (!user) return { statusCode: 401, body: 'Unauthorized' };
+    const { client, user } = await getSupabaseUser(event);
 
     const { data: eventRow } = await client
       .from('events')
@@ -31,6 +28,7 @@ export async function handler(event) {
 
     return { statusCode: 200, body: JSON.stringify({ event_id: eventRow.id }) };
   } catch (err) {
-    return { statusCode: 500, body: err.message };
+    const status = err.message === 'NO_TOKEN' || err.message === 'INVALID_TOKEN' ? 401 : 500;
+    return { statusCode: status, body: err.message };
   }
 }
