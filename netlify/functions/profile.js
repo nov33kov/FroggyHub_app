@@ -14,7 +14,7 @@ async function handler(event, context) {
   try {
     // context.user.sub — id из токена
     const { rows } = await client.query(
-      'SELECT id, nickname, email, created_at FROM public.users_local WHERE id = $1 LIMIT 1',
+      'SELECT id, username, email, created_at FROM public.local_users WHERE id = $1 LIMIT 1',
       [context.user.sub]
     );
     if (!rows[0]) return err('User not found', 404);

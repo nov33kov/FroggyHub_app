@@ -11,8 +11,8 @@ exports.handler = async (event) => {
     let payload = {};
     try { payload = JSON.parse(event.body || '{}'); } catch { return err('Invalid JSON body', 400); }
 
-    const { nickname, password } = payload;
-    if (!nickname || !password) return err('Missing nickname or password', 400);
+    const { username, password } = payload;
+    if (!username || !password) return err('Missing username or password', 400);
 
     const conn = process.env.DATABASE_URL;
     if (!conn) return err('DATABASE_URL is not set', 500);
@@ -21,8 +21,8 @@ exports.handler = async (event) => {
     await client.connect();
 
     const { rows } = await client.query(
-      'SELECT id, nickname, password_hash FROM public.users_local WHERE nickname=$1 LIMIT 1',
-      [nickname]
+      'SELECT id, username, password_hash FROM public.local_users WHERE username=$1 LIMIT 1',
+      [username]
     );
 
     if (!rows[0]) { await client.end(); return err('User not found', 401); }
@@ -34,9 +34,9 @@ exports.handler = async (event) => {
     await client.end();
 
     // JWT
-    const token = signToken({ sub: user.id, nickname: user.nickname });
+    const token = signToken({ sub: user.id, username: user.username });
 
-    return ok({ success: true, token, user: { id: user.id, nickname: user.nickname } });
+    return ok({ success: true, token, user: { id: user.id, username: user.username } });
   } catch (e) {
     console.error('local-login error:', e && (e.stack || e.message || e));
     return err(e && e.message ? e.message : 'Internal error', 500);

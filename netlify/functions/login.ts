@@ -30,8 +30,8 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { nickname, password } = JSON.parse(event.body || '{}')
-    if (!nickname || !password) {
+    const { username, password } = JSON.parse(event.body || '{}')
+    if (!username || !password) {
       return err('Некорректные данные')
     }
 
@@ -39,8 +39,8 @@ export const handler: Handler = async (event) => {
 
     try {
       const { rows } = await client.query(
-        'SELECT id, nickname, password_hash FROM users_local WHERE nickname=$1 LIMIT 1',
-        [nickname]
+        'SELECT id, username, password_hash FROM local_users WHERE username=$1 LIMIT 1',
+        [username]
       )
       if (rows.length === 0) {
         return err('Пользователь не найден', 401)
@@ -51,11 +51,11 @@ export const handler: Handler = async (event) => {
         return err('Неверный пароль', 401)
       }
       const token = jwt.sign(
-        { sub: user.id, nickname: user.nickname },
+        { sub: user.id, username: user.username },
         process.env.JWT_SECRET as string,
         { expiresIn: '7d' }
       )
-      return ok({ ok: true, token, user: { id: user.id, nickname: user.nickname } })
+      return ok({ ok: true, token, user: { id: user.id, username: user.username } })
     } catch (e) {
       return err('Ошибка сервера', 500)
     } finally {

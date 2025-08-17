@@ -1,4 +1,4 @@
-const LS_NICK = 'fh:nickname';
+const LS_USERNAME = 'fh:username';
 const $ = (s, r=document)=>r.querySelector(s);
 
 function toast(msg, type='info'){
@@ -28,13 +28,13 @@ async function callFn(name, payload){
   return data;
 }
 
-const getNickname = ()=> localStorage.getItem(LS_NICK)||'';
-const setNickname = (n)=> {
-  localStorage.setItem(LS_NICK, n);
+const getUsername = ()=> localStorage.getItem(LS_USERNAME)||'';
+const setUsername = (u)=> {
+  localStorage.setItem(LS_USERNAME, u);
   const badge = $('[data-user-badge]');
-  if(badge) badge.textContent = n||'гость';
+  if(badge) badge.textContent = u||'гость';
 };
-setNickname(getNickname());
+setUsername(getUsername());
 
 /* ---------- Supabase init with proxy fallback ---------- */
 const DEBUG_AUTH = !!window.DEBUG_AUTH;
@@ -93,12 +93,12 @@ async function switchToProxyAndRetry(action){
 
 window.ensureSupabase = ensureSupabase;
 
-const clearNickname = () => setNickname('');
+const clearUsername = () => setUsername('');
 
 function renderUserBadge({ nickname, email } = {}) {
   const badge = document.querySelector('[data-user-badge]');
   if (!badge) return;
-  const name = (nickname && nickname.trim()) || getNickname() || (email || '').split('@')[0] || 'гость';
+  const name = (nickname && nickname.trim()) || getUsername() || (email || '').split('@')[0] || 'гость';
   badge.textContent = name;
 }
 
@@ -303,7 +303,7 @@ async function logout(msg){
   try{ await sb.auth.signOut(); }catch(_){ }
   manualSignOut = false;
   try{ await fetch('/.netlify/functions/local-logout'); }catch(_){ }
-  clearNickname();
+  clearUsername();
   renderUserBadge({ nickname:'', email:'' });
   sessionStorage.removeItem('sb_mode');
   sessionStorage.removeItem('pendingCreate');
@@ -533,27 +533,27 @@ function goToLobby(){
 }
 
 async function handleRegister(){
-  const nickname = document.getElementById('reg-nickname')?.value.trim();
+  const username = document.getElementById('reg-username')?.value.trim();
   const p1 = document.getElementById('reg-password')?.value;
   const p2 = document.getElementById('reg-password2')?.value;
-  if(!nickname || p1.length<4 || p1!==p2) return setStatus('reg','Проверьте ник и пароли');
+  if(!username || p1.length<4 || p1!==p2) return setStatus('reg','Проверьте логин и пароли');
   setStatus('reg','');
   setBusy('reg', true);
-  document.getElementById('reg-nickname')?.classList.remove('input-error');
+  document.getElementById('reg-username')?.classList.remove('input-error');
   try{
-    await call('auth-register', { nickname, password: p1 });
-    setNickname(nickname);
-    renderUserBadge({ nickname });
+    await call('auth-register', { username, password: p1 });
+    setUsername(username);
+    renderUserBadge({ nickname: username });
     setStatus('reg','Готово! Теперь войдите.');
     showAuthPane('login');
     const li = document.querySelector('#pane-login input[name="login"], #pane-login input[type="text"], #pane-login input[type="email"]');
-    if(li){ li.value = nickname; li.focus(); }
+    if(li){ li.value = username; li.focus(); }
   }catch(e){
     showErr('register', e);
     let msg = e?.message || 'Ошибка сети';
     if(e.status === 409){
-      msg = 'Ник уже занят';
-      const field = document.getElementById('reg-nickname');
+      msg = 'Логин уже занят';
+      const field = document.getElementById('reg-username');
       field?.classList.add('input-error');
       field?.focus();
     }else if(e.status >= 500 || e.status === 0){
@@ -566,15 +566,15 @@ async function handleRegister(){
 }
 
 async function handleLogin(){
-  const nickname = document.getElementById('login-identifier')?.value.trim();
+  const username = document.getElementById('login-username')?.value.trim();
   const password = document.getElementById('login-password')?.value;
-  if(!nickname || !password) return setStatus('login','Введите ник и пароль');
+  if(!username || !password) return setStatus('login','Введите логин и пароль');
   setStatus('login','');
   setBusy('login', true);
   try{
-    const { user } = await call('auth-login', { nickname, password });
-    const n = user?.nickname || nickname;
-    setNickname(n);
+    const { user } = await call('auth-login', { username, password });
+    const n = user?.username || username;
+    setUsername(n);
     renderUserBadge({ nickname: n });
     localStorage.setItem('fh_user', JSON.stringify(user));
     setStatus('login','Вход выполнен');
@@ -583,7 +583,7 @@ async function handleLogin(){
     showErr('login', e);
     let msg = e?.message || 'Ошибка сети';
     if(e.status === 401){
-      msg = 'Неверный ник или пароль';
+      msg = 'Неверный логин или пароль';
     }else if(e.status >= 500 || e.status === 0){
       msg = 'Проблемы с сервером, попробуйте позже';
     }
@@ -649,7 +649,7 @@ resetSetBtn?.addEventListener('click', async ()=>{
       currentUser = supUser;
       setSession(emailSup);
       window.currentUserEmail = emailSup;
-      renderUserBadge({ nickname: getNickname(), email: emailSup });
+      renderUserBadge({ nickname: getUsername(), email: emailSup });
       show('#screen-lobby');
       return;
     }
@@ -657,7 +657,7 @@ resetSetBtn?.addEventListener('click', async ()=>{
   const email = getSession();
   if (email && users[email]) {
     window.currentUserEmail = email;
-    renderUserBadge({ nickname: getNickname(), email });
+    renderUserBadge({ nickname: getUsername(), email });
     show('#screen-lobby');
   } else {
     localStorage.removeItem(SESSION_KEY);
@@ -797,7 +797,7 @@ document.addEventListener('DOMContentLoaded', initCookieBanner);
 
 document.addEventListener('DOMContentLoaded', () => {
   const email = window.currentUserEmail || '';
-  renderUserBadge({ nickname: getNickname(), email });
+  renderUserBadge({ nickname: getUsername(), email });
 });
 
 ensureSupabase().then(async sb => {
@@ -807,7 +807,7 @@ ensureSupabase().then(async sb => {
   toggleAuthButtons(!currentUser);
   if(currentUser){
     window.currentUserEmail = currentUser.email || '';
-    renderUserBadge({ nickname: getNickname(), email: window.currentUserEmail });
+    renderUserBadge({ nickname: getUsername(), email: window.currentUserEmail });
     show('#screen-lobby');
     const pending = sessionStorage.getItem('pendingCreate');
     if(pending){
@@ -850,7 +850,7 @@ ensureSupabase().then(async sb => {
     }
     if(event === 'SIGNED_IN' && currentUser){
       window.currentUserEmail = currentUser.email || '';
-      renderUserBadge({ nickname: getNickname(), email: window.currentUserEmail });
+      renderUserBadge({ nickname: getUsername(), email: window.currentUserEmail });
       show('#screen-lobby');
       const pendingProfile = sessionStorage.getItem('pendingProfileName');
       if(pendingProfile){
@@ -1633,8 +1633,8 @@ if(editForm){
 const createBtn = document.querySelector('[data-action="create-event"]');
 if (createBtn){
   createBtn.addEventListener('click', withBusy(createBtn, async ()=>{
-    const nickname = getNickname();
-    if(!nickname){ toast('Сначала войдите/зарегистрируйтесь (нужен ник)', 'error'); return; }
+    const username = getUsername();
+    if(!username){ toast('Сначала войдите/зарегистрируйтесь (нужен логин)', 'error'); return; }
 
     const event = {
       title: $('#event-title')?.value?.trim() || 'Моё событие',
@@ -1647,7 +1647,7 @@ if (createBtn){
     };
 
     try{
-      const r = await callFn('create-event', { nickname, event });
+      const r = await callFn('create-event', { username, event });
       const code = r?.code || r?.event?.join_code;
       if(code){ try{ await navigator.clipboard.writeText(code);}catch{} }
       toast(code ? `Событие создано, код: ${code}` : 'Событие создано');
@@ -1659,13 +1659,13 @@ if (createBtn){
 const joinBtn2 = document.querySelector('[data-action="join-event"]');
 if (joinBtn2){
   joinBtn2.addEventListener('click', withBusy(joinBtn2, async ()=>{
-    const nickname = getNickname();
-    if(!nickname){ toast('Сначала войдите с никнеймом', 'error'); return; }
+    const username = getUsername();
+    if(!username){ toast('Сначала войдите с логином', 'error'); return; }
     const code = ($('#join-code')?.value||'').trim();
     if(!/^\w{6}$/.test(code)){ toast('Введите корректный 6-значный код', 'error'); return; }
 
     try{
-      const r = await callFn('join-by-code', { nickname, code });
+      const r = await callFn('join-by-code', { username, code });
       toast('Вы присоединились к событию');
       // location.href = `/event.html?id=${encodeURIComponent(r?.event?.id||r?.id)}`;
     }catch(e){ toast(e.message || 'Не удалось присоединиться', 'error'); }
@@ -1673,24 +1673,24 @@ if (joinBtn2){
 }
 
 $('#login-btn')?.addEventListener('click', withBusy($('#login-btn'), async ()=>{
-  const nickname = $('#login-nickname')?.value?.trim();
+  const username = $('#login-username')?.value?.trim();
   const password = $('#login-password')?.value||'';
-  if(!nickname || !password){ toast('Введите ник и пароль', 'error'); return; }
-  try{ await callFn('local-login', { nickname, password }); setNickname(nickname); toast('Вход выполнен'); }
+  if(!username || !password){ toast('Введите логин и пароль', 'error'); return; }
+  try{ await callFn('local-login', { username, password }); setUsername(username); toast('Вход выполнен'); }
   catch(e){ toast(e.message||'Не удалось войти','error'); }
 }));
 
 $('#signup-btn')?.addEventListener('click', withBusy($('#signup-btn'), async ()=>{
-  const nickname = $('#signup-nickname')?.value?.trim();
+  const username = $('#signup-username')?.value?.trim();
   const p1 = $('#signup-password')?.value||'', p2 = $('#signup-password2')?.value||'';
-  if(!nickname || !p1 || p1!==p2){ toast('Проверьте ник и пароли', 'error'); return; }
-  try{ await callFn('local-signup', { nickname, password:p1 }); setNickname(nickname); toast('Регистрация успешна'); }
+  if(!username || !p1 || p1!==p2){ toast('Проверьте логин и пароли', 'error'); return; }
+  try{ await callFn('local-signup', { username, password:p1 }); setUsername(username); toast('Регистрация успешна'); }
   catch(e){ toast(e.message||'Не удалось зарегистрироваться','error'); }
 }));
 
 $('#logout-btn')?.addEventListener('click', withBusy($('#logout-btn'), async ()=>{
   try{ await callFn('local-logout', {});}catch(e){ console.warn(e); }
-  setNickname('');
+  setUsername('');
   toast('Вы вышли');
 }));
 

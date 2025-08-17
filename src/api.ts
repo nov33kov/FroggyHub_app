@@ -5,8 +5,8 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/.netlify/functions'
 });
 
-export const login = async (nickname: string, password: string) => {
-  const { data } = await api.post('/local-login', { nickname, password });
+export const login = async (username: string, password: string) => {
+  const { data } = await api.post('/local-login', { username, password });
   if (data?.token) localStorage.setItem('token', data.token);
   return data;
 };
