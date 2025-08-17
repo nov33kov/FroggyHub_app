@@ -31,8 +31,8 @@ exports.handler = async (event) => {
       return err('Invalid JSON body', 400);
     }
 
-    const { nickname, password, email } = payload;
-    if (!nickname || !password) return err('Missing nickname or password', 400);
+    const { username, password, email } = payload;
+    if (!username || !password) return err('Missing username or password', 400);
 
     const conn = process.env.DATABASE_URL;
     if (!conn) return err('DATABASE_URL is not set', 500);
@@ -51,16 +51,16 @@ exports.handler = async (event) => {
     let result;
     try {
       result = await client.query(
-        `INSERT INTO public.users_local (nickname, email, password_hash)
+        `INSERT INTO public.local_users (username, email, password_hash)
          VALUES ($1, $2, $3)
-         RETURNING id, nickname, email, created_at`,
-        [nickname, email || null, passwordHash]
+         RETURNING id, username, email, created_at`,
+        [username, email || null, passwordHash]
       );
     } catch (e) {
       // PG duplicate key
       if (e && e.code === '23505') {
         await client.end();
-        return err('Nickname already exists', 409);
+        return err('Username already exists', 409);
       }
       throw e;
     }

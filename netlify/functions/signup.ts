@@ -29,8 +29,8 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { nickname, password } = JSON.parse(event.body || '{}')
-    if (!nickname || !password) {
+    const { username, password } = JSON.parse(event.body || '{}')
+    if (!username || !password) {
       return err('Некорректные данные')
     }
 
@@ -39,13 +39,13 @@ export const handler: Handler = async (event) => {
     try {
       const hash = await bcrypt.hash(password, 10)
       await client.query(
-        'INSERT INTO users_local (nickname, password_hash) VALUES ($1, $2)',
-        [nickname, hash]
+        'INSERT INTO local_users (username, password_hash) VALUES ($1, $2)',
+        [username, hash]
       )
       return ok({ ok: true, message: 'Регистрация успешна' })
     } catch (e: any) {
       if (e.code === '23505') {
-        return err('Такой ник уже есть')
+        return err('Такой логин уже есть')
       }
       return err('Ошибка сервера', 500)
     } finally {
