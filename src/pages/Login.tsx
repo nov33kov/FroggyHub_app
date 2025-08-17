@@ -1,6 +1,5 @@
 // src/pages/Login.tsx
 import { login } from '../api';
-import axios from 'axios';
 
 export async function doLogin(
   nickname: string,
