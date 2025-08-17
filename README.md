@@ -41,7 +41,7 @@ Set the following environment variables in Netlify:
 
 - `SUPABASE_DB_URL` – connection string to the primary database (read/write).
 - `RW_NEON_URL` – Neon database URL with write access for the sync process.
-- `NETLIFY_DATABASE_URL` – read-only DSN for application queries.
+- `DATABASE_URL` – connection string for application queries.
 - `SYNC_BATCH_LIMIT` – maximum rows per batch (default: `2000`).
 - `SYNC_TABLES` – comma separated list of tables to replicate
   (`profiles,events,participants,wishlist_items,cookie_consents`).
