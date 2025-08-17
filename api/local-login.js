@@ -7,10 +7,11 @@ export async function handler(event) {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
   try {
-    const { username, password } = JSON.parse(event.body || '{}');
-    if (!username || !password) return { statusCode: 400, body: 'username and password required' };
+    const { nickname: nicknameFromBody, username, password } = JSON.parse(event.body || '{}');
+    const nickname = nicknameFromBody ?? username;
+    if (!nickname || !password) return { statusCode: 400, body: 'nickname and password required' };
     const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { data: userRow } = await client.from('local_users').select('*').eq('username', username).maybeSingle();
+    const { data: userRow } = await client.from('local_users').select('*').eq('nickname', nickname).maybeSingle();
     if (!userRow) return { statusCode: 401, body: 'Invalid credentials' };
     const match = await bcrypt.compare(password, userRow.password_hash || '');
     if (!match) return { statusCode: 401, body: 'Invalid credentials' };
@@ -20,7 +21,7 @@ export async function handler(event) {
       'Content-Type': 'application/json',
       'Set-Cookie': `sb-access-token=${access_token}; HttpOnly; Path=/; Max-Age=3600`
     };
-    return { statusCode: 200, headers, body: JSON.stringify({ access_token, user: { id: userRow.id, username: userRow.username } }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ access_token, user: { id: userRow.id, nickname: userRow.nickname } }) };
   } catch (err) {
     return { statusCode: 500, body: err.message };
   }
